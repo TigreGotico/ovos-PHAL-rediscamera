@@ -74,7 +74,8 @@ setup(
     ],
     entry_points={'ovos.plugin.phal': PLUGIN_ENTRY_POINT,
                   'console_scripts': [
-                      'ovos-rediscamera=ovos_PHAL_rediscamera.__main__:standalone_launch'
+                      'ovos-rediscamera=ovos_PHAL_rediscamera.__main__:standalone_launch',
+                      'redis2mjpeg=ovos_PHAL_rediscamera.server:main'
                   ]
-    }
+                  }
 )

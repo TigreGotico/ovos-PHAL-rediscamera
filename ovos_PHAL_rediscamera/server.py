@@ -17,9 +17,9 @@ class RedisCameraReader:
         self.r.ping()
         self.name = name
 
-    def get(self):
+    def get(self, name=None):
         """Retrieve Numpy array from Redis key 'n'"""
-        encoded = self.r.get(self.name)
+        encoded = self.r.get(name or self.name)
         h, w = struct.unpack('>II', encoded[:8])
         a = np.frombuffer(encoded, dtype=np.uint8, offset=8).reshape(h, w, 3)
         return a
@@ -30,9 +30,10 @@ def get_app(**kwargs):
 
     image_hub = RedisCameraReader(**kwargs)
 
-    def _gen_frames():  # generate frame by frame from camera
+    def _gen_frames(name=None):  # generate frame by frame from camera
+        name = name or image_hub.name
         while True:
-            frame = image_hub.get()
+            frame = image_hub.get(name)
             if frame is None:
                 continue
             try:
@@ -46,18 +47,22 @@ def get_app(**kwargs):
     def video_feed():
         return Response(_gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+    @app.route('/video_feed/<name>')
+    def named_video_feed(name):
+        return Response(_gen_frames(name), mimetype='multipart/x-mixed-replace; boundary=frame')
+
     return app
 
 
-def main(conf=None):
+def main():
+    # TODO kwargs
+    conf = {
+        "name": "redis2mjpeg",
+        "host": "192.168.1.17"
+    }
     app = get_app(**conf)
     app.run(host="0.0.0.0")
 
 
 if __name__ == "__main__":
-    # TODO kwargs
-    conf = {
-        "name": "laptop",
-        "host": "192.168.1.17"
-    }
-    main(conf)
+    main()

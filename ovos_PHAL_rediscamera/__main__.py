@@ -11,7 +11,6 @@ def standalone_launch(conf = None):
 
     wait_for_exit_signal()
     print("Redis server needs to be running")
-    print("Launch this in several terminals, check that you can access camera in multiple python processes")
 
 
 if __name__ == "__main__":

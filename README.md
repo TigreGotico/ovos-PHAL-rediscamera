@@ -4,7 +4,8 @@ Expose your OVOS device camera to Redis for remote processing
 
 When you need to access a camera feed in several devices
 
-> This plugin needs a redis server running, it will use it to store the most recent camera frame
+> This plugin needs a redis server running, it will use it to store the most recent camera frame, it is suitable for when you need to process the camera in several devices
+
 
 ## Redis Server
 
