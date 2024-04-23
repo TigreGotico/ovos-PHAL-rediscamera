@@ -15,22 +15,40 @@ You can find dedicated redis documentation elsewhere, the easiest way to get sta
 
 ## Configuration
 
+### Redis
+
+for voice and face recognition a companion Redis server needs to be running
+
+This is where buffers for mic and camera data are stored, allowing access to remote cameras/mic data from several devices
+
+a OVOS skill can then access a specific camera/microphone by id by retrieving the feed from redis
+
+Redis access is configured globally for all OVOS components in `mycroft.conf`
+
+```json
+{
+  "redis": {
+    "host": "my-redis.cloud.redislabs.com",
+    "port": 6379,
+    "username": "default",
+    "password": "secret",
+    "ssl": true,
+    "ssl_certfile": "./redis_user.crt",
+    "ssl_keyfile": "./redis_user_private.key",
+    "ssl_ca_certs": "./redis_ca.pem"
+  }
+}
+```
+
+### Plugin
+
 ```javascript
 {
   "PHAL": {
     "ovos-PHAL-rediscamera": {
       "device_name": "my_phal_device",
       "camera_index": 0,
-      "serve_mjpeg": false, // serve a mjpeg camera stream at http://0.0.0.0:5000/video_feed
-      "host": "my-redis.cloud.redislabs.com",
-      // below are all optional redis options
-      "port": 6379,
-      "username": "default", // use your Redis user. More info https://redis.io/docs/management/security/acl/
-      "password": "secret", // use your Redis password
-      "ssl": true,
-      "ssl_certfile": "./redis_user.crt",
-      "ssl_keyfile": "./redis_user_private.key",
-      "ssl_ca_certs": "./redis_ca.pem"
+      "serve_mjpeg": false // serve a mjpeg camera stream at http://0.0.0.0:5000/video_feed
     }
   }
 }
@@ -67,7 +85,7 @@ class RedisCameraReader:
         return a
 
 
-remote_cam = RedisCameraReader("laptop", "192.168.1.17")
+remote_cam = RedisCameraReader("laptop")
 while True:
     frame = remote_cam.get()
     # do stuff

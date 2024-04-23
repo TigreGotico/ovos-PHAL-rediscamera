@@ -1,21 +1,18 @@
 import struct
-
+import click
 import cv2
 import numpy as np
 import redis
-from flask import Flask, Response
+from ovos_config import Configuration
 
 
 class RedisCameraReader:
 
-    def __init__(self, name, host, port=6379,  **kwargs):
-        # Redis connection
-        kwargs = {k: v for k,v in kwargs.items()
-                  if k in ["username", "password", "ssl",
-                           "ssl_certfile", "ssl_keyfile", "ssl_ca_certs"]}
-        self.r = redis.Redis(host=host, port=port, **kwargs)
+    def __init__(self, device_name: str):
+        kwargs = Configuration().get("redis", {"host": "127.0.0.1", "port": 6379})
+        self.r = redis.Redis(**kwargs)
         self.r.ping()
-        self.name = name
+        self.name = "cam::" + device_name
 
     def get(self, name=None):
         """Retrieve Numpy array from Redis key 'n'"""
@@ -26,6 +23,10 @@ class RedisCameraReader:
 
 
 def get_app(**kwargs):
+    # imported here to make flask dependency optional
+    # mjpeg server is not the main purpose of the plugin
+    from flask import Flask, Response
+
     app = Flask(__name__)
 
     image_hub = RedisCameraReader(**kwargs)
@@ -33,7 +34,7 @@ def get_app(**kwargs):
     def _gen_frames(name=None):  # generate frame by frame from camera
         name = name or image_hub.name
         while True:
-            frame = image_hub.get(name)
+            frame = image_hub.get("cam::" + name)
             if frame is None:
                 continue
             try:
@@ -54,13 +55,13 @@ def get_app(**kwargs):
     return app
 
 
-def main():
-    # TODO kwargs
-    conf = {
-        "name": "redis2mjpeg",
-        "host": "192.168.1.17"
-    }
-    app = get_app(**conf)
+@click.command()
+@click.option('--camera-id', type=str, help='Name of the device running the camera.')
+@click.option('--camera-index', default=0, type=int, help='Index of the camera to be used.')
+def main(camera_id, camera_index):
+    """Launch the PHALRedisCamera with specified configurations."""
+    app = get_app(camera_index=camera_index,
+                  device_name=camera_id)
     app.run(host="0.0.0.0")
 
 
